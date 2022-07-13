@@ -1,8 +1,9 @@
 import json
 
 from django.http import JsonResponse
-from django.templatetags.static import static
 from django.shortcuts import get_object_or_404
+from django.templatetags.static import static
+from rest_framework.decorators import api_view
 
 from .models import Order, OrderElement, Product
 
@@ -59,9 +60,10 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
     """Оформление заказа."""
-    order_content = json.loads(request.body)
+    order_content = request.data
 
     order = Order(
         delivery_address=order_content.get('address'),
