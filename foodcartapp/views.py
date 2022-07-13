@@ -5,7 +5,7 @@ from django.templatetags.static import static
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, Serializer, ListField
+from rest_framework.serializers import ListField, ModelSerializer
 
 from .models import Order, OrderElement, Product
 
@@ -21,7 +21,8 @@ class OrderElementSerializer(ModelSerializer):
 
 class OrderSerializer(ModelSerializer):
     products = ListField(
-        child=OrderElementSerializer()
+        child=OrderElementSerializer(),
+        write_only=True
     )
 
     class Meta:
@@ -95,6 +96,13 @@ def register_order(request):
     serializer = OrderSerializer(data=order_content)
     serializer.is_valid(raise_exception=True)
 
+    products = order_content.get('products')
+
+    if not products:
+        error_content = {
+            'products': ['Этот список не может быть пустым.']}
+        return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
+
     order = Order(
         address=order_content.get('address'),
         firstname=order_content.get('firstname'),
@@ -102,13 +110,6 @@ def register_order(request):
         phonenumber=order_content.get('phonenumber'),
     )
     order.save()
-
-    products = order_content.get('products')
-
-    if not products:
-        error_content = {
-            'products': ['Этот список не может быть пустым.']}
-        return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
 
     for product_content in products:
         product = Product.objects.get(pk=product_content.get('product'))
@@ -119,4 +120,4 @@ def register_order(request):
             quantity=product_content.get('quantity')
         ).save()
 
-    return JsonResponse({})
+    return Response(OrderSerializer(order).data)
