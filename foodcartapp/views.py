@@ -1,13 +1,38 @@
 import json
 
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.serializers import ModelSerializer, Serializer, ListField
 
 from .models import Order, OrderElement, Product
+
+
+class OrderElementSerializer(ModelSerializer):
+    class Meta:
+        model = OrderElement
+        fields = [
+            'product',
+            'quantity',
+        ]
+
+
+class OrderSerializer(ModelSerializer):
+    products = ListField(
+        child=OrderElementSerializer()
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            'address',
+            'firstname',
+            'lastname',
+            'phonenumber',
+            'products',
+        ]
 
 
 def banners_list_api(request):
@@ -65,41 +90,28 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     """Оформление заказа."""
-    error_content = {'error': ''}
     order_content = request.data
 
+    serializer = OrderSerializer(data=order_content)
+    serializer.is_valid(raise_exception=True)
+
     order = Order(
-        delivery_address=order_content.get('address'),
-        first_name=order_content.get('firstname'),
-        last_name=order_content.get('lastname'),
-        phone_number=order_content.get('phonenumber'),
+        address=order_content.get('address'),
+        firstname=order_content.get('firstname'),
+        lastname=order_content.get('lastname'),
+        phonenumber=order_content.get('phonenumber'),
     )
     order.save()
 
-    if 'products' not in order_content:
-        error_content['error'] = 'products: Обязательное поле.'
-        return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
-
     products = order_content.get('products')
 
-    if not isinstance(products, list):
-        error_content['error'] = 'products: Ожидался list со значениями.'
+    if not products:
+        error_content = {
+            'products': ['Этот список не может быть пустым.']}
         return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        if isinstance(products, list) and not products:
-            error_content['error'] = 'products: Этот список не может быть пустым.'
-            return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
 
     for product_content in products:
-        if 'product' not in product_content or 'quantity' not in product_content:
-            error_content['error'] = 'Нет полей: product или quantity.'
-            return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            product = Product.objects.get(pk=product_content.get('product'))
-        except Product.DoesNotExist:
-            error_content['error'] = 'Такой продукт не найден.'
-            return Response(error_content, status=status.HTTP_404_NOT_FOUND)
+        product = Product.objects.get(pk=product_content.get('product'))
 
         OrderElement(
             order=order,
