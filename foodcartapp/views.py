@@ -3,7 +3,9 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.templatetags.static import static
+from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .models import Order, OrderElement, Product
 
@@ -63,6 +65,7 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     """Оформление заказа."""
+    error_content = {'error': ''}
     order_content = request.data
 
     order = Order(
@@ -73,11 +76,30 @@ def register_order(request):
     )
     order.save()
 
-    for product_content in order_content.get('products'):
-        product = get_object_or_404(
-            Product,
-            pk=product_content.get('product')
-        )
+    if 'products' not in order_content:
+        error_content['error'] = 'products: Обязательное поле.'
+        return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
+
+    products = order_content.get('products')
+
+    if not isinstance(products, list):
+        error_content['error'] = 'products: Ожидался list со значениями.'
+        return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        if isinstance(products, list) and not products:
+            error_content['error'] = 'products: Этот список не может быть пустым.'
+            return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
+
+    for product_content in products:
+        if 'product' not in product_content or 'quantity' not in product_content:
+            error_content['error'] = 'Нет полей: product или quantity.'
+            return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(pk=product_content.get('product'))
+        except Product.DoesNotExist:
+            error_content['error'] = 'Такой продукт не найден.'
+            return Response(error_content, status=status.HTTP_404_NOT_FOUND)
 
         OrderElement(
             order=order,
