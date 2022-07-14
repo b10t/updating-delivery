@@ -1,14 +1,11 @@
 from django import forms
-from django.shortcuts import redirect, render
-from django.views import View
-from django.urls import reverse_lazy
-from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-
-
-from foodcartapp.models import Product, Restaurant
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
+from foodcartapp.models import Order, Product, Restaurant
 
 
 class Login(forms.Form):
@@ -76,7 +73,8 @@ def view_products(request):
             **default_availability,
             **{item.restaurant_id: item.availability for item in product.menu_items.all()},
         }
-        orderer_availability = [availability[restaurant.id] for restaurant in restaurants]
+        orderer_availability = [availability[restaurant.id]
+                                for restaurant in restaurants]
 
         products_with_restaurants.append(
             (product, orderer_availability)
@@ -97,6 +95,23 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    return render(request, template_name='order_items.html', context={
-        # TODO заглушка для нереализованного функционала
-    })
+    orders = Order.objects.all()
+
+    order_items = []
+
+    for order in orders:
+        order_item = {
+            'id': order.id,
+            'client': f'{order.firstname} {order.lastname}',
+            'phonenumber': order.phonenumber,
+            'address': order.address,
+        }
+        order_items.append(order_item)
+
+    return render(
+        request,
+        template_name='order_items.html',
+        context={
+            'order_items': order_items,
+        }
+    )
