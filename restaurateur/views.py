@@ -100,13 +100,15 @@ def view_orders(request):
     order_items = []
 
     for order in orders:
+        url = reverse_lazy('admin:foodcartapp_order_change', args=(order.id,))
+
         order_item = {
             'id': order.id,
             'cost': order.cost,
             'client': f'{order.firstname} {order.lastname}',
             'phonenumber': order.phonenumber,
             'address': order.address,
-            'url': reverse_lazy('admin:foodcartapp_order_change', args=(order.id,)),
+            'url': url,
         }
         order_items.append(order_item)
 
