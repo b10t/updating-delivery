@@ -1,6 +1,17 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models import Count, F, Prefetch, Sum
 from phonenumber_field.modelfields import PhoneNumberField
+
+
+class OrderQuerySet(models.QuerySet):
+    def cost(self):
+        return self.annotate(
+            cost=Sum(
+                F('order_elements__quantity') *
+                F('order_elements__product__price')
+            )
+        )
 
 
 class Restaurant(models.Model):
@@ -141,6 +152,8 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(
         verbose_name='Телефон'
     )
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Заказ'
