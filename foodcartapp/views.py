@@ -1,5 +1,6 @@
 import json
 
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status
@@ -103,22 +104,23 @@ def register_order(request):
             'products': ['Этот список не может быть пустым.']}
         return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
 
-    order = Order(
-        address=order_content.get('address'),
-        firstname=order_content.get('firstname'),
-        lastname=order_content.get('lastname'),
-        phonenumber=order_content.get('phonenumber'),
-    )
-    order.save()
+    with transaction.atomic():
+        order = Order(
+            address=order_content.get('address'),
+            firstname=order_content.get('firstname'),
+            lastname=order_content.get('lastname'),
+            phonenumber=order_content.get('phonenumber'),
+        )
+        order.save()
 
-    for product_content in products:
-        product = Product.objects.get(pk=product_content.get('product'))
+        for product_content in products:
+            product = Product.objects.get(pk=product_content.get('product'))
 
-        OrderElement(
-            order=order,
-            product=product,
-            quantity=product_content.get('quantity'),
-            price=product.price,
-        ).save()
+            OrderElement(
+                order=order,
+                product=product,
+                quantity=product_content.get('quantity'),
+                price=product.price,
+            ).save()
 
     return Response(OrderSerializer(order).data)
