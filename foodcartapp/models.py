@@ -9,7 +9,7 @@ class OrderQuerySet(models.QuerySet):
         return self.annotate(
             cost=Sum(
                 F('order_elements__quantity') *
-                F('order_elements__product__price')
+                F('order_elements__price')
             )
         )
 
@@ -180,6 +180,13 @@ class OrderElement(models.Model):
     quantity = models.IntegerField(
         verbose_name='Количество',
         validators=[MinValueValidator(1), MaxValueValidator(25)]
+    )
+    price = models.DecimalField(
+        verbose_name='Цена',
+        default=0,
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
     )
 
     class Meta:

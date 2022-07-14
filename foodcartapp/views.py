@@ -117,7 +117,8 @@ def register_order(request):
         OrderElement(
             order=order,
             product=product,
-            quantity=product_content.get('quantity')
+            quantity=product_content.get('quantity'),
+            price=product.price,
         ).save()
 
     return Response(OrderSerializer(order).data)

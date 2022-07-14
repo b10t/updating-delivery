@@ -124,3 +124,13 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         OrderElementInline
     ]
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
+        for obj in formset.deleted_objects:
+            obj.delete()
+        for instance in instances:
+            if not change:
+                instance.price = instance.product.price
+            instance.save()
