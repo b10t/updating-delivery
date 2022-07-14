@@ -106,6 +106,7 @@ def view_orders(request):
             'client': f'{order.firstname} {order.lastname}',
             'phonenumber': order.phonenumber,
             'address': order.address,
+            'url': reverse_lazy('admin:foodcartapp_order_change', args=(order.id,)),
         }
         order_items.append(order_item)
 
