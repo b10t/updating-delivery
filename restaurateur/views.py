@@ -95,7 +95,11 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all().cost()
+    orders = (
+        Order.objects
+        .manager_orders()  # type: ignore
+        .cost()
+    )
 
     order_items = []
 
@@ -104,6 +108,7 @@ def view_orders(request):
 
         order_item = {
             'id': order.id,
+            'order_status': order.get_order_status_display(),
             'cost': order.cost,
             'client': f'{order.firstname} {order.lastname}',
             'phonenumber': order.phonenumber,

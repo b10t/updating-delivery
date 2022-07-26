@@ -1,15 +1,12 @@
 from django.contrib import admin
-from django.shortcuts import redirect, reverse
+from django.shortcuts import redirect
 from django.templatetags.static import static
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import Product
-from .models import ProductCategory
-from .models import Restaurant
-from .models import RestaurantMenuItem
-from .models import Order
-from .models import OrderElement
+from .models import (Order, OrderElement, Product, ProductCategory, Restaurant,
+                     RestaurantMenuItem)
 
 
 class RestaurantMenuItemInline(admin.TabularInline):
@@ -117,6 +114,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = [
+        'order_status',
         'address',
         'firstname',
         'lastname',

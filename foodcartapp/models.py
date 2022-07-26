@@ -6,12 +6,17 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 class OrderQuerySet(models.QuerySet):
     def cost(self):
+        """Возвращает стоимость заказа."""
         return self.annotate(
             cost=Sum(
                 F('order_elements__quantity') *
                 F('order_elements__price')
             )
         )
+
+    def manager_orders(self):
+        """Возвращает заказы менеджера."""
+        return self.exclude(order_status='C')
 
 
 class Restaurant(models.Model):
@@ -137,6 +142,13 @@ class RestaurantMenuItem(models.Model):
 
 class Order(models.Model):
     """Заказы."""
+    STATUS = (
+        ('U', 'Необработан'),
+        ('G', 'Собирается'),
+        ('D', 'Доставляется'),
+        ('C', 'Завершён'),
+    )
+
     address = models.CharField(
         verbose_name='Адрес доставки',
         max_length=200
@@ -151,6 +163,13 @@ class Order(models.Model):
     )
     phonenumber = PhoneNumberField(
         verbose_name='Телефон'
+    )
+    order_status = models.CharField(
+        verbose_name='Статус заказа',
+        db_index=True,
+        choices=STATUS,
+        default='U',
+        max_length=1
     )
 
     objects = OrderQuerySet.as_manager()
