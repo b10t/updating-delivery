@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, F, Prefetch, Sum
@@ -16,7 +18,7 @@ class OrderQuerySet(models.QuerySet):
 
     def manager_orders(self):
         """Возвращает заказы менеджера."""
-        return self.exclude(order_status='C')
+        return self.exclude(order_status=Order.COMPLETED).order_by('order_status')
 
 
 class Restaurant(models.Model):
@@ -142,11 +144,16 @@ class RestaurantMenuItem(models.Model):
 
 class Order(models.Model):
     """Заказы."""
-    STATUS = (
-        ('U', 'Необработан'),
-        ('G', 'Собирается'),
-        ('D', 'Доставляется'),
-        ('C', 'Завершён'),
+    UNPROCESSED = 0
+    GOING_TO = 1
+    DELIVERED = 2
+    COMPLETED = 9
+
+    ORDER_STATUS = (
+        (UNPROCESSED, 'Необработан'),
+        (GOING_TO, 'Собирается'),
+        (DELIVERED, 'Доставляется'),
+        (COMPLETED, 'Завершён'),
     )
 
     PAYMENT = (
@@ -169,12 +176,11 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(
         verbose_name='Телефон'
     )
-    order_status = models.CharField(
+    order_status = models.SmallIntegerField(
         verbose_name='Статус заказа',
         db_index=True,
-        choices=STATUS,
-        default='U',
-        max_length=1
+        choices=ORDER_STATUS,
+        default=UNPROCESSED
     )
     method_payment = models.CharField(
         verbose_name='Способ оплаты',
@@ -187,6 +193,14 @@ class Order(models.Model):
         verbose_name='Комментарий',
         blank=True,
         null=False
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        verbose_name='Ресторан',
+        related_name='orders',
+        on_delete=models.DO_NOTHING,
+        blank=True,
+        null=True,
     )
     created_at = models.DateTimeField(
         verbose_name='Оформлен в',
@@ -205,6 +219,34 @@ class Order(models.Model):
     )
 
     objects = OrderQuerySet.as_manager()
+
+    @property
+    def restaurants(self):
+        """Возвращает список ресторанов."""
+        if self.order_status == Order.UNPROCESSED:
+            restaurant_ids = []
+            product_in_restaurants = defaultdict(set)
+
+            menu_items = (RestaurantMenuItem.objects
+                          .filter(availability=True)
+                          .values_list('product', 'restaurant'))
+
+            for product, restaurant in menu_items:
+                product_in_restaurants[product].add(restaurant)
+
+            for element in self.order_elements.all():  # type: ignore
+                restaurant_ids.append(
+                    product_in_restaurants[element.product_id]
+                )
+
+            restaurant_ids = set.intersection(*restaurant_ids)
+
+            return list(Restaurant.objects.filter(pk__in=restaurant_ids))
+
+        if self.restaurant:
+            return [self.restaurant]
+
+        return []
 
     class Meta:
         verbose_name = 'Заказ'

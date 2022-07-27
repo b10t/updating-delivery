@@ -106,6 +106,24 @@ def view_orders(request):
     for order in orders:
         url = reverse_lazy('admin:foodcartapp_order_change', args=(order.id,))
 
+        restaurants_html = ''
+
+        restaurants = order.restaurants
+
+        if order.order_status == Order.UNPROCESSED:
+            for restaurant in restaurants:
+                restaurants_html += f'<li>{restaurant}</li>'
+
+            restaurants_html = f"""
+                                <details>
+                                    <summary>---</summary>
+                                    {restaurants_html}
+                                </details>
+            """
+        else:
+            if restaurants:
+                restaurants_html = f'<li>{restaurants[0]}</li>'
+
         order_item = {
             'id': order.id,
             'order_status': order.get_order_status_display(),
@@ -115,6 +133,7 @@ def view_orders(request):
             'phonenumber': order.phonenumber,
             'address': order.address,
             'comment': order.comment,
+            'html': restaurants_html,
             'url': url,
         }
         order_items.append(order_item)

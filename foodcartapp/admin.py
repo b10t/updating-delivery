@@ -126,6 +126,13 @@ class OrderAdmin(admin.ModelAdmin):
     ]
 
     def save_formset(self, request, form, formset, change):
+        order = form.save(commit=False)
+
+        if change and order.restaurant and order.order_status == Order.UNPROCESSED:
+            order.order_status = Order.GOING_TO
+
+        order.save()
+
         instances = formset.save(commit=False)
 
         for obj in formset.deleted_objects:
