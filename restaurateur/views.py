@@ -112,7 +112,7 @@ def view_orders(request):
 
         if order.order_status == Order.UNPROCESSED:
             for restaurant in restaurants:
-                restaurants_html += f'<li>{restaurant}</li>'
+                restaurants_html += f'<li>{restaurant} - {restaurant.distance} км.</li>'
 
             restaurants_html = f"""
                                 <details>
@@ -122,7 +122,7 @@ def view_orders(request):
             """
         else:
             if restaurants:
-                restaurants_html = f'<li>{restaurants[0]}</li>'
+                restaurants_html = f'Готовит: <li>{restaurants[0]} - {restaurants[0].distance} км.</li>'
 
         order_item = {
             'id': order.id,

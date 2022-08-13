@@ -3,7 +3,16 @@ from collections import defaultdict
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, F, Prefetch, Sum
+from geolocation.models import Location
 from phonenumber_field.modelfields import PhoneNumberField
+
+
+def calculate_distance(address_from, address_to):
+    """Возвращает расстояние между двумя адресами."""
+    if distance := Location.calculate_distance(address_from, address_to):
+        return round(distance, 2)
+
+    return -1
 
 
 class OrderQuerySet(models.QuerySet):
@@ -241,9 +250,22 @@ class Order(models.Model):
 
             restaurant_ids = set.intersection(*restaurant_ids)
 
-            return list(Restaurant.objects.filter(pk__in=restaurant_ids))
+            restaurants = list(
+                Restaurant.objects.filter(pk__in=restaurant_ids))
+
+            for restaurant in restaurants:
+                restaurant.distance = calculate_distance(
+                    self.address,
+                    restaurant.address
+                )
+
+            return sorted(restaurants, key=lambda restaurant: restaurant.distance)
 
         if self.restaurant:
+            self.restaurant.distance = calculate_distance(
+                self.address,
+                self.restaurant.address
+            )
             return [self.restaurant]
 
         return []
