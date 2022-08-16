@@ -3,16 +3,8 @@ from collections import defaultdict
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, F, Prefetch, Sum
-from geolocation.models import Location
+from geolocation.models import calculate_distance
 from phonenumber_field.modelfields import PhoneNumberField
-
-
-def calculate_distance(address_from, address_to):
-    """Возвращает расстояние между двумя адресами."""
-    if distance := Location.calculate_distance(address_from, address_to):
-        return round(distance, 2)
-
-    return -1
 
 
 class OrderQuerySet(models.QuerySet):

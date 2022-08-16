@@ -6,6 +6,14 @@ from django.db import models
 from geopy.distance import lonlat, distance
 
 
+def calculate_distance(address_from, address_to):
+    """Возвращает расстояние между двумя адресами."""
+    if distance := Location.calculate_distance(address_from, address_to):
+        return round(distance, 2)
+
+    return -1
+
+
 def fetch_coordinates_from_api(apikey, address):
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
