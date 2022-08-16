@@ -113,14 +113,20 @@ def register_order(request):
         )
         order.save()
 
+        order_elements = []
+
         for product_content in products:
             product = Product.objects.get(pk=product_content.get('product'))
 
-            OrderElement(
-                order=order,
-                product=product,
-                quantity=product_content.get('quantity'),
-                price=product.price,
-            ).save()
+            order_elements.append(
+                OrderElement(
+                    order=order,
+                    product=product,
+                    quantity=product_content.get('quantity'),
+                    price=product.price,
+                )
+            )
+
+        OrderElement.objects.bulk_create(order_elements)
 
     return Response(OrderSerializer(order).data)

@@ -246,6 +246,9 @@ class Order(models.Model):
                     product_in_restaurants[element.product_id]
                 )
 
+            if not restaurant_ids:
+                return []
+
             restaurant_ids = set.intersection(*restaurant_ids)
 
             restaurants = list(
