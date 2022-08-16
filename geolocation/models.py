@@ -59,11 +59,13 @@ class Location(models.Model):
         except Location.DoesNotExist:
             coords = fetch_coordinates_from_api(yandex_api_key, address)
 
+            longitude, latitude = coords  # type: ignore
+
             if coords:
                 Location(
                     address=address,
-                    longitude=coords[0],
-                    latitude=coords[1],
+                    longitude=longitude,
+                    latitude=latitude,
                     received_at=timezone.now()
                 ).save()
 
