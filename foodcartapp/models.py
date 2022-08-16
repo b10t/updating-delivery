@@ -203,9 +203,9 @@ class Order(models.Model):
         blank=True,
         null=False
     )
-    restaurant = models.ForeignKey(
+    serving_restaurant = models.ForeignKey(
         Restaurant,
-        verbose_name='Ресторан',
+        verbose_name='Обслуживающий ресторан',
         related_name='orders',
         on_delete=models.DO_NOTHING,
         blank=True,
@@ -230,7 +230,7 @@ class Order(models.Model):
     objects = OrderQuerySet.as_manager()
 
     @property
-    def restaurants(self):
+    def serving_restaurants(self):
         """Возвращает список ресторанов."""
         if self.order_status == Order.UNPROCESSED:
             restaurant_ids = []
