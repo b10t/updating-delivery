@@ -115,7 +115,7 @@ class ProductCategoryAdmin(admin.ModelAdmin):
 class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
     list_display = [
-        'order_status',
+        'status',
         'address',
         'firstname',
         'lastname',
@@ -128,8 +128,8 @@ class OrderAdmin(admin.ModelAdmin):
     def save_formset(self, request, form, formset, change):
         order = form.save(commit=False)
 
-        if change and order.restaurant and order.order_status == Order.UNPROCESSED:
-            order.order_status = Order.GOING_TO
+        if change and order.serving_restaurant and order.status == Order.UNPROCESSED:
+            order.status = Order.GOING_TO
 
         order.save()
 

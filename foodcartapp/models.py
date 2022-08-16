@@ -27,7 +27,7 @@ class OrderQuerySet(models.QuerySet):
 
     def manager_orders(self):
         """Возвращает заказы менеджера."""
-        return self.exclude(order_status=Order.COMPLETED).order_by('order_status')
+        return self.exclude(status=Order.COMPLETED).order_by('status')
 
 
 class Restaurant(models.Model):
@@ -185,7 +185,7 @@ class Order(models.Model):
     phonenumber = PhoneNumberField(
         verbose_name='Телефон'
     )
-    order_status = models.SmallIntegerField(
+    status = models.SmallIntegerField(
         verbose_name='Статус заказа',
         db_index=True,
         choices=ORDER_STATUS,
@@ -195,13 +195,11 @@ class Order(models.Model):
         verbose_name='Способ оплаты',
         db_index=True,
         choices=PAYMENT,
-        default='E',
         max_length=1
     )
     comment = models.TextField(
         verbose_name='Комментарий',
         blank=True,
-        null=False
     )
     serving_restaurant = models.ForeignKey(
         Restaurant,
@@ -232,7 +230,7 @@ class Order(models.Model):
     @property
     def serving_restaurants(self):
         """Возвращает список ресторанов."""
-        if self.order_status == Order.UNPROCESSED:
+        if self.status == Order.UNPROCESSED:
             restaurant_ids = []
             product_in_restaurants = defaultdict(set)
 
@@ -261,12 +259,12 @@ class Order(models.Model):
 
             return sorted(restaurants, key=lambda restaurant: restaurant.distance)
 
-        if self.restaurant:
-            self.restaurant.distance = calculate_distance(
+        if self.serving_restaurant:
+            self.serving_restaurant.distance = calculate_distance(
                 self.address,
-                self.restaurant.address
+                self.serving_restaurant.address
             )
-            return [self.restaurant]
+            return [self.serving_restaurant]
 
         return []
 

@@ -51,7 +51,7 @@
     {% for item in order_items %}
       <tr>
         <td>{{ item.id }}</td>
-        <td>{{ item.order_status }}</td>
+        <td>{{ item.status }}</td>
         <td>{{ item.method_payment }}</td>
         <td>{{ item.cost|floatformat:2 }}</td>
         <td>{{ item.client }}</td>
