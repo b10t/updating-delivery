@@ -149,6 +149,5 @@ class OrderAdmin(admin.ModelAdmin):
 
             if url_has_allowed_host_and_scheme(redirect_url, None):
                 return redirect(redirect_url)
-            return res
-        else:
-            return res
+
+        return res
