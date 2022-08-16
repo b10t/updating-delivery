@@ -99,6 +99,7 @@ def view_orders(request):
         Order.objects
         .manager_orders()  # type: ignore
         .cost()
+        .serving_restaurants()
     )
 
     order_items = []

@@ -21,6 +21,57 @@ class OrderQuerySet(models.QuerySet):
         """Возвращает заказы менеджера."""
         return self.exclude(status=Order.COMPLETED).order_by('status')
 
+    def serving_restaurants(self):
+        """Возвращает список ресторанов."""
+        for order in self:
+            if order.status != Order.UNPROCESSED and not order.serving_restaurant:
+                order.serving_restaurants = []
+                continue
+
+            if order.serving_restaurant:
+                order.serving_restaurant.distance = calculate_distance(
+                    order.address,
+                    order.serving_restaurant.address
+                )
+                order.serving_restaurants = [order.serving_restaurant]
+                continue
+
+            restaurant_ids = []
+            product_in_restaurants = defaultdict(set)
+
+            menu_items = (RestaurantMenuItem.objects
+                          .filter(availability=True)
+                          .values_list('product', 'restaurant'))
+
+            for product, restaurant in menu_items:
+                product_in_restaurants[product].add(restaurant)
+
+            for element in order.elements.all():  # type: ignore
+                restaurant_ids.append(
+                    product_in_restaurants[element.product_id]
+                )
+
+            if not restaurant_ids:
+                order.serving_restaurants = []
+                continue
+
+            restaurant_ids = set.intersection(*restaurant_ids)
+
+            restaurants = list(
+                Restaurant.objects.filter(pk__in=restaurant_ids))
+
+            for restaurant in restaurants:
+                restaurant.distance = calculate_distance(
+                    order.address,
+                    restaurant.address
+                )
+
+            order.serving_restaurants = sorted(
+                restaurants, key=lambda restaurant: restaurant.distance
+            )
+
+        return self
+
 
 class Restaurant(models.Model):
     name = models.CharField(
@@ -218,51 +269,6 @@ class Order(models.Model):
     )
 
     objects = OrderQuerySet.as_manager()
-
-    @property
-    def serving_restaurants(self):
-        """Возвращает список ресторанов."""
-        if self.status != Order.UNPROCESSED and not self.serving_restaurant:
-            return []
-
-        if self.serving_restaurant:
-            self.serving_restaurant.distance = calculate_distance(
-                self.address,
-                self.serving_restaurant.address
-            )
-            return [self.serving_restaurant]
-
-        restaurant_ids = []
-        product_in_restaurants = defaultdict(set)
-
-        menu_items = (RestaurantMenuItem.objects
-                        .filter(availability=True)
-                        .values_list('product', 'restaurant'))
-
-        for product, restaurant in menu_items:
-            product_in_restaurants[product].add(restaurant)
-
-        for element in self.elements.all():  # type: ignore
-            restaurant_ids.append(
-                product_in_restaurants[element.product_id]
-            )
-
-        if not restaurant_ids:
-            return []
-
-        restaurant_ids = set.intersection(*restaurant_ids)
-
-        restaurants = list(
-            Restaurant.objects.filter(pk__in=restaurant_ids))
-
-        for restaurant in restaurants:
-            restaurant.distance = calculate_distance(
-                self.address,
-                restaurant.address
-            )
-
-        return sorted(restaurants, key=lambda restaurant: restaurant.distance)
-
 
     class Meta:
         verbose_name = 'Заказ'
