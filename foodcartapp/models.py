@@ -20,8 +20,8 @@ class OrderQuerySet(models.QuerySet):
         """Возвращает стоимость заказа."""
         return self.annotate(
             cost=Sum(
-                F('order_elements__quantity') *
-                F('order_elements__price')
+                F('elements__quantity') *
+                F('elements__price')
             )
         )
 
@@ -243,7 +243,7 @@ class Order(models.Model):
             for product, restaurant in menu_items:
                 product_in_restaurants[product].add(restaurant)
 
-            for element in self.order_elements.all():  # type: ignore
+            for element in self.elements.all():  # type: ignore
                 restaurant_ids.append(
                     product_in_restaurants[element.product_id]
                 )
@@ -283,7 +283,7 @@ class OrderElement(models.Model):
     order = models.ForeignKey(
         Order,
         verbose_name='Заказ',
-        related_name='order_elements',
+        related_name='elements',
         on_delete=models.CASCADE,
     )
     product = models.ForeignKey(
