@@ -33,10 +33,14 @@ class Location(models.Model):
         verbose_name='Адрес'
     )
     latitude = models.FloatField(
-        verbose_name='Широта'
+        verbose_name='Широта',
+        blank=True,
+        null=True
     )
     longitude = models.FloatField(
-        verbose_name='Долгота'
+        verbose_name='Долгота',
+        blank=True,
+        null=True
     )
     received_at = models.DateTimeField(
         verbose_name='Дата получения данных',
