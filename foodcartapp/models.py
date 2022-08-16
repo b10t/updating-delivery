@@ -222,37 +222,8 @@ class Order(models.Model):
     @property
     def serving_restaurants(self):
         """Возвращает список ресторанов."""
-        if self.status == Order.UNPROCESSED:
-            restaurant_ids = []
-            product_in_restaurants = defaultdict(set)
-
-            menu_items = (RestaurantMenuItem.objects
-                          .filter(availability=True)
-                          .values_list('product', 'restaurant'))
-
-            for product, restaurant in menu_items:
-                product_in_restaurants[product].add(restaurant)
-
-            for element in self.elements.all():  # type: ignore
-                restaurant_ids.append(
-                    product_in_restaurants[element.product_id]
-                )
-
-            if not restaurant_ids:
-                return []
-
-            restaurant_ids = set.intersection(*restaurant_ids)
-
-            restaurants = list(
-                Restaurant.objects.filter(pk__in=restaurant_ids))
-
-            for restaurant in restaurants:
-                restaurant.distance = calculate_distance(
-                    self.address,
-                    restaurant.address
-                )
-
-            return sorted(restaurants, key=lambda restaurant: restaurant.distance)
+        if self.status != Order.UNPROCESSED and not self.serving_restaurant:
+            return []
 
         if self.serving_restaurant:
             self.serving_restaurant.distance = calculate_distance(
@@ -261,7 +232,37 @@ class Order(models.Model):
             )
             return [self.serving_restaurant]
 
-        return []
+        restaurant_ids = []
+        product_in_restaurants = defaultdict(set)
+
+        menu_items = (RestaurantMenuItem.objects
+                        .filter(availability=True)
+                        .values_list('product', 'restaurant'))
+
+        for product, restaurant in menu_items:
+            product_in_restaurants[product].add(restaurant)
+
+        for element in self.elements.all():  # type: ignore
+            restaurant_ids.append(
+                product_in_restaurants[element.product_id]
+            )
+
+        if not restaurant_ids:
+            return []
+
+        restaurant_ids = set.intersection(*restaurant_ids)
+
+        restaurants = list(
+            Restaurant.objects.filter(pk__in=restaurant_ids))
+
+        for restaurant in restaurants:
+            restaurant.distance = calculate_distance(
+                self.address,
+                restaurant.address
+            )
+
+        return sorted(restaurants, key=lambda restaurant: restaurant.distance)
+
 
     class Meta:
         verbose_name = 'Заказ'
