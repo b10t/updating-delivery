@@ -65,17 +65,16 @@ class Location(models.Model):
             coords = (coords.longitude, coords.latitude)
 
         except Location.DoesNotExist:
-            coords = fetch_coordinates_from_api(yandex_api_key, address)
+            if coords := fetch_coordinates_from_api(yandex_api_key, address):
+                longitude, latitude = coords
 
-            longitude, latitude = coords  # type: ignore
-
-            if coords:
-                Location(
-                    address=address,
-                    longitude=longitude,
-                    latitude=latitude,
-                    received_at=timezone.now()
-                ).save()
+                if coords:
+                    Location.objects.create(
+                        address=address,
+                        longitude=longitude,
+                        latitude=latitude,
+                        received_at=timezone.now()
+                    )
 
         return coords
 
@@ -95,4 +94,4 @@ class Location(models.Model):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self) -> str:
-        return f'{self.address}'
+        return self.address
