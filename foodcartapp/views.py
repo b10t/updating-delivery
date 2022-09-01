@@ -105,13 +105,12 @@ def register_order(request):
         return Response(error_content, status=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
-        order = Order(
+        order = Order.objects.create(
             address=order_content.get('address'),
             firstname=order_content.get('firstname'),
             lastname=order_content.get('lastname'),
             phonenumber=order_content.get('phonenumber'),
         )
-        order.save()
 
         order_elements = []
 
