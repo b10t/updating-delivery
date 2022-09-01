@@ -97,9 +97,9 @@ def view_restaurants(request):
 def view_orders(request):
     orders = (
         Order.objects
-        .manager_orders()  # type: ignore
-        .cost()
-        .serving_restaurants()
+        .get_manager_orders()  # type: ignore
+        .get_cost()
+        .get_serving_restaurants()
     )
 
     order_items = []
