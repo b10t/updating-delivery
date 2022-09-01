@@ -1,9 +1,9 @@
 from collections import defaultdict
+from copy import copy
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, F, Prefetch, Sum
-from geolocation.models import calculate_distance
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -39,10 +39,6 @@ class OrderQuerySet(models.QuerySet):
                 continue
 
             if order.serving_restaurant:
-                order.serving_restaurant.distance = calculate_distance(
-                    order.address,
-                    order.serving_restaurant.address
-                )
                 order.serving_restaurants = [order.serving_restaurant]
                 continue
 
@@ -60,18 +56,11 @@ class OrderQuerySet(models.QuerySet):
             restaurant_ids = set.intersection(*restaurant_ids)
 
             restaurants = set(
-                menu_item.restaurant for menu_item in menu_items if menu_item.restaurant.id in restaurant_ids
+                copy(menu_item.restaurant) for menu_item in menu_items
+                if menu_item.restaurant.id in restaurant_ids
             )
 
-            for restaurant in restaurants:
-                restaurant.distance = calculate_distance(
-                    order.address,
-                    restaurant.address
-                )
-
-            order.serving_restaurants = sorted(
-                restaurants, key=lambda restaurant: restaurant.distance
-            )
+            order.serving_restaurants = restaurants
 
         return self
 

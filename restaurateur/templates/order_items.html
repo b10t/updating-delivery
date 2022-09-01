@@ -58,7 +58,24 @@
         <td>{{ item.phonenumber }}</td>
         <td>{{ item.address }}</td>
         <td>{{ item.comment }}</td>
-        <td>{{ item.html|safe }}</td>
+        <td>
+          {% if item.order_status == Order.UNPROCESSED %}
+            <details>
+              <summary>---</summary>
+                {% for restaurant in item.serving_restaurants %}
+                  <li>{{ restaurant }} - {{ restaurant.distance }} км.</li>
+                {% endfor %}
+            </details>
+          {% else %}
+
+            {% if item.serving_restaurants %}
+              {% with item.serving_restaurants|first as restaurant %}
+                Готовит: <li>{{ restaurant }} - {{ restaurant.distance }} км.</li>
+              {% endwith %}
+            {% endif %}
+
+          {% endif %}
+        </td>
         <td><a href="{{ item.url|urlencode }}?next={{ request.path }}">Редактировать</a></td>
       </tr>
     {% endfor %}

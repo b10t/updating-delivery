@@ -6,6 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 from foodcartapp.models import Order, Product, Restaurant
+from geolocation.geocode_api import calculate_distance
 
 
 class Login(forms.Form):
@@ -107,23 +108,17 @@ def view_orders(request):
     for order in orders:
         url = reverse_lazy('admin:foodcartapp_order_change', args=(order.id,))
 
-        restaurants_html = ''
+        restaurants = order.serving_restaurants
 
-        serving_restaurants = order.serving_restaurants
+        for restaurant in restaurants:
+            restaurant.distance = calculate_distance(
+                order.address,
+                restaurant.address
+            )
 
-        if order.status == Order.UNPROCESSED:
-            for restaurant in serving_restaurants:
-                restaurants_html += f'<li>{restaurant} - {restaurant.distance} км.</li>'
-
-            restaurants_html = f"""
-                                <details>
-                                    <summary>---</summary>
-                                    {restaurants_html}
-                                </details>
-            """
-        else:
-            if serving_restaurants:
-                restaurants_html = f'Готовит: <li>{serving_restaurants[0]} - {serving_restaurants[0].distance} км.</li>'
+        order.serving_restaurants = sorted(
+            restaurants, key=lambda restaurant: restaurant.distance
+        )
 
         order_item = {
             'id': order.id,
@@ -134,7 +129,8 @@ def view_orders(request):
             'phonenumber': order.phonenumber,
             'address': order.address,
             'comment': order.comment,
-            'html': restaurants_html,
+            'order_status': order.status,
+            'serving_restaurants': order.serving_restaurants,
             'url': url,
         }
         order_items.append(order_item)
@@ -144,5 +140,6 @@ def view_orders(request):
         template_name='order_items.html',
         context={
             'order_items': order_items,
+            'Order': Order
         }
     )
