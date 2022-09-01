@@ -8,7 +8,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class OrderQuerySet(models.QuerySet):
-    def cost(self):
+    def get_cost(self):
         """Возвращает стоимость заказа."""
         return self.annotate(
             cost=Sum(
@@ -17,12 +17,22 @@ class OrderQuerySet(models.QuerySet):
             )
         )
 
-    def manager_orders(self):
+    def get_manager_orders(self):
         """Возвращает заказы менеджера."""
         return self.exclude(status=Order.COMPLETED).order_by('status')
 
-    def serving_restaurants(self):
+    def get_serving_restaurants(self):
         """Возвращает список ресторанов."""
+        menu_items = list(RestaurantMenuItem.objects
+                          .filter(availability=True)
+                          .prefetch_related('restaurant'))
+
+        product_in_restaurants = defaultdict(set)
+
+        for menu_item in menu_items:
+            product_in_restaurants[menu_item.product_id].add(
+                menu_item.restaurant_id)
+
         for order in self:
             if order.status != Order.UNPROCESSED and not order.serving_restaurant:
                 order.serving_restaurants = []
@@ -37,14 +47,6 @@ class OrderQuerySet(models.QuerySet):
                 continue
 
             restaurant_ids = []
-            product_in_restaurants = defaultdict(set)
-
-            menu_items = (RestaurantMenuItem.objects
-                          .filter(availability=True)
-                          .values_list('product', 'restaurant'))
-
-            for product, restaurant in menu_items:
-                product_in_restaurants[product].add(restaurant)
 
             for element in order.elements.all():  # type: ignore
                 restaurant_ids.append(
@@ -57,8 +59,9 @@ class OrderQuerySet(models.QuerySet):
 
             restaurant_ids = set.intersection(*restaurant_ids)
 
-            restaurants = list(
-                Restaurant.objects.filter(pk__in=restaurant_ids))
+            restaurants = set(
+                menu_item.restaurant for menu_item in menu_items if menu_item.restaurant.id in restaurant_ids
+            )
 
             for restaurant in restaurants:
                 restaurant.distance = calculate_distance(
