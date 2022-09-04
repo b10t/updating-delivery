@@ -8,8 +8,6 @@ def calculate_distance(address_from, address_to):
     if distance := geocode_models.Location.calculate_distance(address_from, address_to):
         return round(distance, 2)
 
-    return -1
-
 
 def fetch_coordinates_from_api(apikey, address):
     base_url = "https://geocode-maps.yandex.ru/1.x"
