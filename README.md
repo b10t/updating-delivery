@@ -58,6 +58,7 @@ pip install -r requirements.txt
 ```sh
 SECRET_KEY=django-insecure-0if40nf4nf93n4
 YANDEX_API_KEY='Ключ от API Yandex'.
+ROLLBAR_ACCESS_TOKEN='токен доступа сервиса Rollbar'.
 ```
 
 Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
@@ -149,6 +150,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)  
 - `YANDEX_API_KEY` - ключ от API Yandex.
+- `ROLLBAR_ACCESS_TOKEN` - токен доступа сервиса Rollbar.
 
 ## Цели проекта
 
