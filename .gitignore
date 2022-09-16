@@ -164,3 +164,4 @@ node_modules/
 bundles/
 .parcel-cache/
 media/
+staticfiles/
