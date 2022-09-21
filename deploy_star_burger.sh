@@ -3,7 +3,11 @@ set -e
 
 cd /opt/updating-delivery
 
+export $(grep -v '^#' .env | xargs -d '\n')
+
 source env/bin/activate
+
+pip install httpie
 
 git pull
 
@@ -19,5 +23,18 @@ systemctl reload nginx.service
 systemctl restart start-burger.service
 
 deactivate
+
+GIT_REV=$(git rev-parse --short HEAD)
+if [[ $? -ne 0 ]]; then
+    GIT_REV="error"
+fi
+
+http POST https://api.rollbar.com/api/1/deploy X-Rollbar-Access-Token:$ROLLBAR_ACCESS_TOKEN \
+    environment=production \
+    revision=$GIT_REV \
+    rollbar_name=b10t \
+    local_username=circle-ci \
+    comment=comment \
+    status=succeeded
 
 echo "Проект успешно обновлён."
