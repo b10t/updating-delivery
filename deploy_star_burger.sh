@@ -22,8 +22,6 @@ npm ci --dev
 systemctl reload nginx.service
 systemctl restart start-burger.service
 
-deactivate
-
 GIT_REV=$(git rev-parse --short HEAD)
 if [[ $? -ne 0 ]]; then
     GIT_REV="error"
@@ -36,5 +34,7 @@ http POST https://api.rollbar.com/api/1/deploy X-Rollbar-Access-Token:$ROLLBAR_A
     local_username=circle-ci \
     comment=comment \
     status=succeeded
+
+deactivate
 
 echo "Проект успешно обновлён."
