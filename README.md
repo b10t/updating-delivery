@@ -152,6 +152,7 @@ Parcel будет следить за файлами в каталоге `bundle
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)  
 - `YANDEX_API_KEY` - ключ от API Yandex.
 - `ROLLBAR_ACCESS_TOKEN` - токен доступа сервиса Rollbar.
+- `ROLLBAR_ENVIRONMENT` - режим окружения Rollbar, `development` или `production`.  
 - `DATABASE_URL` - строка подключения к базе данных.
 
 ## Как быстро обновить код на сервере  
